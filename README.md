@@ -3,6 +3,8 @@
 `DS18B20` is an C library for controlling DS18B20 temperature sensors.
 It can be easily compiled for every micro-controller supported by `gcc`.
 
+This library is based on https://github.com/Jacajack/avr-ds18b20
+
 ## Usage example
 
 ```c
@@ -21,13 +23,15 @@ int main( )
     
     ds18_lib_init(&myLib);
     
-    uint8_t myrom[10];
-    uint8_t mysp[10];
+    uint8_t myrom[10]; //ROM
+    uint8_t mysp[10]; //scratchpad
     
     ds18_dev_t myds18;
     myds18.GPIOx = GPIOA;
     myds18.pin = GPIO_PIN_4;
-    myds18.rom = myrom;
+    
+    //myds18.rom = myrom; //Use ROM matching
+    myds18.rom = NULL; //Don't use ROM matching. Recommended
     myds18.sp = mysp;
     
     
@@ -77,5 +81,3 @@ void mybitDelay(int c)
 
 
 ```
-
-For more information visit [wiki](https://github.com/Jacajack/avr-dallas1820/wiki).
