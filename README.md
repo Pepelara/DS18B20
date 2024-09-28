@@ -43,7 +43,7 @@ int main( )
 		//Delay (sensor needs time to perform conversion)
 		HAL_Delay( 1000 );
 
-		//Read temperature (without ROM matching)
+		//Read temperature (with ROM matching)
 		ds18_read(&mybus, &myds18[0], &temp1);
 		ds18_read(&mybus, &myds18[1], &temp2);
 
