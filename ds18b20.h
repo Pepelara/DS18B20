@@ -43,22 +43,25 @@
 #define ONEWIRE_ERROR_COMM 	1 //! Communication failure
 
 typedef struct {
-    void *GPIOx;
-    uint32_t pin;
-    uint8_t *rom;
-    uint8_t *sp;
-}ds18_dev_t;
+    uint64_t sp;
+    uint64_t rom;
+} ds18_dev_t;
 
 typedef struct {
+    void *GPIOx;
+    uint32_t pin;
+} onewire_bus_t;
+
+typedef struct {
+    void (*disable_irq)(void);
+    void (*enable_irq)(void);
     void (*user_pinMode)(void *port, int pin, int mode);
     void (*user_writePin)(void *port, int pin, int out);
     int (*user_readPin)(void *port, int pin);
     void (*user_portDelay)(int delay);
-}ds18_lib_t;
+} onewire_lib_t;
 
-
-
-void ds18_lib_init(ds18_lib_t *lib);
+extern void onewire_lib_init(onewire_lib_t *lib);
 
 /**
 	\brief Initializes 1wire bus (basically sends a reset pulse)
@@ -68,7 +71,7 @@ void ds18_lib_init(ds18_lib_t *lib);
 	\param mask A bit mask, determining to which pin the device is connected
 	\returns \ref ONEWIRE_ERROR_OK on success
 */
-extern uint8_t ds18_onewireInit( ds18_dev_t *dev );
+extern uint8_t ds18_onewireInit( onewire_bus_t *owbus );
 
 /**
 	\brief Sends a single bit over 1wire bus
@@ -79,7 +82,7 @@ extern uint8_t ds18_onewireInit( ds18_dev_t *dev );
 	\param bit The bit value
 	\returns the bit value
 */
-extern uint8_t ds18_onewireWriteBit(ds18_dev_t *dev, uint8_t bit );
+extern uint8_t ds18_onewireWriteBit( onewire_bus_t *owbus, uint8_t bit );
 
 /**
 	\brief Sends a byte over 1wire bus
@@ -89,7 +92,7 @@ extern uint8_t ds18_onewireWriteBit(ds18_dev_t *dev, uint8_t bit );
 	\param mask A bit mask, determining to which pin the device is connected
 	\param data Data byte to be sent
 */
-extern void ds18_onewireWrite( ds18_dev_t *dev, uint8_t data );
+extern void ds18_onewireWrite( onewire_bus_t *owbus, uint8_t data );
 
 /**
 	\brief Reads a single bit from 1wire bus
@@ -99,7 +102,7 @@ extern void ds18_onewireWrite( ds18_dev_t *dev, uint8_t data );
 	\param mask A bit mask, determining to which pin the device is connected
 	\returns received bit value
 */
-extern uint8_t ds18_onewireReadBit( ds18_dev_t *dev );
+extern uint8_t ds18_onewireReadBit(  onewire_bus_t *owbus );
 
 /**
 	\brief Reads a byte from 1wire bus
@@ -109,7 +112,7 @@ extern uint8_t ds18_onewireReadBit( ds18_dev_t *dev );
 	\param mask A bit mask, determining to which pin the device is connected
 	\returns received byte value
 */
-extern uint8_t ds18_onewireRead( ds18_dev_t *dev );
+extern uint8_t ds18_onewireRead( onewire_bus_t *owbus );
 
 /**
 	\brief Calculate 8-bit Maxim/Dallas CRC of provided data
@@ -129,7 +132,7 @@ extern uint8_t ds18_crc8( uint8_t *data, uint8_t length );
 
 	\note If provided ROM address pointer is NULL, ROM matching operation is skipped.
 */
-extern void ds18_match( ds18_dev_t *dev );
+extern void ds18_match( onewire_bus_t *owbus, ds18_dev_t *dev );
 
 /**
 	\brief Requests temperature conversion on DS18B20 sensor(s)
@@ -142,7 +145,7 @@ extern void ds18_match( ds18_dev_t *dev );
 
 	\note If provided ROM address pointer is NULL, ROM matching operation is skipped.
 */
-extern uint8_t ds18_convert( ds18_dev_t *dev );
+extern uint8_t ds18_convert( onewire_bus_t *owbus, ds18_dev_t *dev );
 
 /**
 	\brief Reads scratchpad from DS18B20 sensor
@@ -156,7 +159,7 @@ extern uint8_t ds18_convert( ds18_dev_t *dev );
 
 	\note If provided ROM address pointer is NULL, ROM matching operation is skipped.
 */
-extern uint8_t ds18_rsp( ds18_dev_t *dev );
+extern uint8_t ds18_rsp( onewire_bus_t *owbus, ds18_dev_t *dev);
 
 /**
 	\brief Writes DS18B20 sensor's scratchpad
@@ -172,7 +175,7 @@ extern uint8_t ds18_rsp( ds18_dev_t *dev );
 
 	\note If provided ROM address pointer is NULL, ROM matching operation is skipped.
 */
-extern uint8_t ds18_wsp( ds18_dev_t *dev, uint8_t th, uint8_t tl, uint8_t conf );
+extern uint8_t ds18_wsp( onewire_bus_t *owbus, ds18_dev_t *dev, uint8_t th, uint8_t tl, uint8_t conf );
 
 /**
 	\brief Copies DS18B20 sensor's scratchpad contents to its internal EEPROM memory
@@ -185,7 +188,7 @@ extern uint8_t ds18_wsp( ds18_dev_t *dev, uint8_t th, uint8_t tl, uint8_t conf )
 
 	\note If provided ROM address pointer is NULL, ROM matching operation is skipped.
 */
-extern uint8_t ds18_csp( ds18_dev_t *dev );
+extern uint8_t ds18_csp( onewire_bus_t *owbus, ds18_dev_t *dev );
 
 /**
 	\brief Reads temperature from DS18B20 sensors
@@ -199,7 +202,7 @@ extern uint8_t ds18_csp( ds18_dev_t *dev );
 
 	\note If provided ROM address pointer is NULL, ROM matching operation is skipped.
 */
-extern uint8_t ds18_read( ds18_dev_t *dev, int32_t *temp);
+extern uint8_t ds18_read( onewire_bus_t *owbus, ds18_dev_t *dev, int16_t *temp);
 
 /**
 	\brief Reads DS18B20 sensor's ROM address
@@ -213,6 +216,27 @@ extern uint8_t ds18_read( ds18_dev_t *dev, int32_t *temp);
 
 	\warning This function works if only one sensors is connected. If more sensors are used, please see \ref ds18b20romsearch
 */
-extern uint8_t ds18_rr( ds18_dev_t *dev );
-	
+extern uint8_t ds18_rr( onewire_bus_t *owbus, ds18_dev_t *dev );
+
+/**
+	\brief Performs search for connected DS18B20 sensors.
+	Discovered sensors' ROM addresses are returned in an array.
+
+	This function can be used to only discover the number of connected sensors.
+	To do so, \ref roms parameter should be set to NULL. As usual, the value
+	returned through \ref romcnt will be the sensor count.
+
+	If the total size of discovered ROMs is greater than buffer size, the user shall only
+	access ROM data addresses up to biggest multiple of 8 less than buffer size.
+	The remaning bytes will contain garbage data and using them may cause UB.
+	The value returned though \ref romcnt can be used to used allocate an array
+	of proper size, before repeating the call.
+
+	\param owbus A pointer to the onewire bus config
+	\param devs A pointer to the device array
+	\param romcnt A pointer to a variable when discovered sensor count will be written
+	\param buflen The length of the ROM array in bytes
+	\returns \ref DS18B20_ERROR_OK on success
+*/
+extern uint8_t ds18_search( onewire_bus_t *owbus, ds18_dev_t *devs, uint8_t *romcnt, uint16_t buflen );
 #endif
